@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiGet } from "../api.js";
 import { formatDate, seriesLabel } from "../books.js";
 import BookCover from "../components/BookCover.jsx";
+import ReadingGoal from "../components/ReadingGoal.jsx";
 
 const TABS = [
     { value: "want_to_read", label: "Want to read", empty: "No books you want to read yet." },
@@ -41,6 +42,7 @@ export default function ReadingPage() {
 
     return (
         <section className="space-y-10">
+            <div className="grid gap-8 lg:grid-cols-[1fr_18rem]">
             <div className="space-y-4">
                 <h1 className="text-2xl font-bold">My reading</h1>
                 <h2 className="text-lg font-semibold">Currently reading</h2>
@@ -62,6 +64,9 @@ export default function ReadingPage() {
                         ))}
                     </ul>
                 )}
+            </div>
+
+            <ReadingGoal />
             </div>
 
             <div className="space-y-4">

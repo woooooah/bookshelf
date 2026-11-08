@@ -185,3 +185,16 @@ class ReadingEntryOut(BaseModel):
 
 class ReadingItemOut(ReadingEntryOut):
     work: LibraryWork
+
+
+# Bralni cilj ------------------------------------------------------------------
+
+
+class ReadingGoalUpdate(BaseModel):
+    target_books: int = Field(gt=0, le=1000)
+
+
+class ReadingGoalOut(BaseModel):
+    year: int
+    target_books: int | None  # None = cilj za to leto se ni nastavljen
+    read_count: int  # branja z datumom zakljucka v tem letu (tudi ponovna)
