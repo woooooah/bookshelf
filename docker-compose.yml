@@ -8,5 +8,6 @@ services:
         required: false
     volumes:
       - ./backend:/app
+    # Ob zagonu izvede manjkajoce migracije, nato zazene streznik.
     # --reload: ob spremembi kode se streznik sam ponovno zazene
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
