@@ -4,7 +4,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models import BookFormat, UserRole
+from app.models import BookFormat, ReadingStatus, UserRole
 
 
 class UserCreate(BaseModel):
@@ -150,3 +150,38 @@ class LoanReturn(BaseModel):
 
 class LoanWithBookOut(LoanOut):
     library_book: LibraryItemOut
+
+
+# Branje -----------------------------------------------------------------------
+
+
+class ReadingStatusUpdate(BaseModel):
+    status: ReadingStatus
+    # "reading": datum zacetka (privzeto danes); "read": datum zakljucka (neobvezen)
+    day: date | None = None
+
+
+class ReadingSessionUpdate(BaseModel):
+    started_at: date | None = None
+    finished_at: date | None = None
+
+
+class ReadingSessionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    started_at: date | None
+    finished_at: date | None
+
+
+class ReadingEntryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    work_id: int
+    status: ReadingStatus
+    sessions: list[ReadingSessionOut]
+
+
+class ReadingItemOut(ReadingEntryOut):
+    work: LibraryWork

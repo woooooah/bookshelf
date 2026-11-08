@@ -4,6 +4,7 @@ import { ApiError, apiGet } from "../api.js";
 import { FORMAT_LABELS, languageName, seriesLabel } from "../books.js";
 import BookCover from "../components/BookCover.jsx";
 import LibraryStatus from "../components/LibraryStatus.jsx";
+import ReadingStatusPicker from "../components/ReadingStatusPicker.jsx";
 
 // Podrobnosti knjige
 export default function BookPage() {
@@ -71,6 +72,7 @@ export default function BookPage() {
                             <Detail label="Genre" value={book.genre} />
                         )}
                     </dl>
+                    <ReadingStatusPicker workId={book.id} />
                     <LibraryStatus book={book} />
                     {book.description && (
                         <p className="max-w-2xl whitespace-pre-line text-ink-soft">

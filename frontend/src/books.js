@@ -47,3 +47,9 @@ export function todayIso() {
     const pad = (n) => String(n).padStart(2, "0");
     return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
+
+export const READING_STATUSES = [
+    { value: "want_to_read", label: "Want to read" },
+    { value: "reading", label: "Currently reading" },
+    { value: "read", label: "Read" },
+];
