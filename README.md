@@ -20,3 +20,25 @@ Dokumentacija je v mapi [`docs`](docs/):
 - [Arhitektura in tehnoloski sklad](docs/04-arhitektura-in-tehnoloski-sklad.md)
 - [Uporabniske zgodbe](docs/05-uporabniske-zgodbe.md)
 - [Wireframes](docs/06-wireframes.md)
+
+## Lokalni zagon
+
+### Predpogoji
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (mora biti zagnan)
+
+### Backend
+
+1. Ustvari datoteko z nastavitvami:
+   ```bash
+   cp backend/.env.example backend/.env
+   ```
+2. Zazeni backend:
+   ```bash
+   docker compose up --build
+   ```
+3. API je dosegljiv na `http://localhost:8000`:
+   - `http://localhost:8000/health` – preverjanje delovanja
+   - `http://localhost:8000/docs` – samodejna dokumentacija API-ja
+
+Ob spremembi kode v `backend/` se streznik sam ponovno zazene. Ustavis ga s `Ctrl+C` ali `docker compose down`.
