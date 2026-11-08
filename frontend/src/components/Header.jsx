@@ -20,12 +20,12 @@ export default function Header() {
   }
 
   const linkClass = ({ isActive }) =>
-    `whitespace-nowrap font-medium hover:text-amber-700 ${
-      isActive ? 'text-amber-700 underline underline-offset-8' : ''
+    `whitespace-nowrap font-medium hover:text-accent ${
+      isActive ? 'text-accent underline underline-offset-8' : ''
     }`
 
   return (
-    <header className="border-b border-stone-200 bg-white">
+    <header className="border-b border-line-strong bg-header">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-4">
         <Link to="/" className="text-2xl font-bold tracking-tight">
           BookShelf
@@ -38,7 +38,7 @@ export default function Header() {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search by title, author or ISBN"
             aria-label="Search books"
-            className="w-full max-w-md rounded-md border border-stone-300 px-3 py-2 focus:border-amber-600 focus:outline-none"
+            className="w-full max-w-md rounded-md border border-line-strong px-3 py-2 focus:border-accent focus:outline-none"
           />
         </form>
 
@@ -51,8 +51,8 @@ export default function Header() {
           </NavLink>
           {!loading && firebaseUser && (
             <span className="flex items-center gap-3 text-sm">
-              {profile && <span className="text-stone-600">{profile.username}</span>}
-              <button onClick={handleLogout} className="hover:text-amber-700">
+              {profile && <span className="text-muted">{profile.username}</span>}
+              <button onClick={handleLogout} className="hover:text-accent">
                 Log out
               </button>
             </span>

@@ -1,1 +1,15 @@
 @import "tailwindcss";
+
+@theme {
+    --color-cream: #faf6ee; /* ozadje strani */
+    --color-header: #efe6d4; /* header */
+    --color-paper: #fdf9f1; /* kartice in seznami */
+    --color-line: #e6dccb; /* robovi in locilne crte */
+    --color-line-strong: #d3c5ad; /* robovi vnosnih polj */
+    --color-ink: #2f2a24; /* glavno besedilo */
+    --color-ink-soft: #4d453b; /* avtor, opisi */
+    --color-muted: #6f665a; /* manj pomembno besedilo */
+    --color-accent: #3d6b57; /* gumbi, povezave, aktivni zavihek */
+    --color-accent-dark: #2f5444; /* gumb ob prehodu z misko */
+    --color-accent-soft: #e6eee8; /* ozadje obvestil */
+}

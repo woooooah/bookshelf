@@ -17,10 +17,10 @@ export default function HomePage() {
   return (
     <section className="space-y-4">
       <h1 className="text-3xl font-bold">Welcome to BookShelf</h1>
-      <p className="text-stone-600">
+      <p className="text-muted">
         Track your reading and keep a record of your home library.
       </p>
-      <ul className="text-sm text-stone-500">
+      <ul className="text-sm text-muted">
         <li>Backend: {status.backend}</li>
         <li>Database: {status.database}</li>
       </ul>

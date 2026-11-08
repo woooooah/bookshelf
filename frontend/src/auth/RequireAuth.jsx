@@ -7,7 +7,7 @@ export default function RequireAuth() {
   const location = useLocation()
 
   if (loading) {
-    return <p className="text-stone-500">Loading...</p>
+    return <p className="text-muted">Loading...</p>
   }
   if (!firebaseUser) {
     return <Navigate to="/login" replace state={{ from: location }} />
