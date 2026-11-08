@@ -271,7 +271,17 @@ class ReadingEntry(Base):
 
     user: Mapped[User] = relationship(back_populates="reading_entries")
     work: Mapped[Work] = relationship()
-    sessions: Mapped[list["ReadingSession"]] = relationship(back_populates="reading_entry")
+    sessions: Mapped[list["ReadingSession"]] = relationship(
+        back_populates="reading_entry",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="ReadingSession.id",
+    )
+
+    @property
+    def open_session(self) -> "ReadingSession | None":
+        """Branje, ki se poteka (brez datuma zakljucka)."""
+        return next((s for s in self.sessions if s.finished_at is None), None)
 
 
 class ReadingSession(Base):

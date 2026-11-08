@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiGet } from "../api.js";
-import { seriesLabel } from "../books.js";
+import { formatDate, seriesLabel } from "../books.js";
 import BookCover from "../components/BookCover.jsx";
 
 const TABS = [
@@ -25,7 +25,9 @@ export default function ReadingPage() {
 
     const { status, entries } = state;
     const reading = entries.filter((e) => e.status === "reading");
-    const tabEntries = entries.filter((e) => e.status === tab);
+    const tabEntries = entries
+        .filter((e) => e.status === tab)
+        .sort((a, b) => (lastFinished(b) ?? "").localeCompare(lastFinished(a) ?? ""));
     const activeTab = TABS.find((t) => t.value === tab);
 
     if (status === "loading") return <p className="text-muted">Loading...</p>;
@@ -52,7 +54,10 @@ export default function ReadingPage() {
                             <li
                                 key={entry.id}
                                 className="rounded-md border border-line bg-paper">
-                                <BookRow work={entry.work} />
+                                <BookRow
+                                    work={entry.work}
+                                    note={startedNote(entry)}
+                                />
                             </li>
                         ))}
                     </ul>
@@ -81,7 +86,10 @@ export default function ReadingPage() {
                     <ul className="divide-y divide-line rounded-md border border-line bg-paper">
                         {tabEntries.map((entry) => (
                             <li key={entry.id}>
-                                <BookRow work={entry.work} />
+                                <BookRow
+                                    work={entry.work}
+                                    note={tab === "read" ? finishedNote(entry) : null}
+                                />
                             </li>
                         ))}
                     </ul>
@@ -91,7 +99,26 @@ export default function ReadingPage() {
     );
 }
 
-function BookRow({ work }) {
+// Datum zadnjega zakljucenega branja (za razvrscanje prebranih)
+function lastFinished(entry) {
+    return entry.sessions
+        .map((s) => s.finished_at)
+        .filter(Boolean)
+        .sort()
+        .at(-1);
+}
+
+function startedNote(entry) {
+    const open = entry.sessions.find((s) => s.finished_at === null);
+    return open?.started_at ? `Started ${formatDate(open.started_at)}` : null;
+}
+
+function finishedNote(entry) {
+    const day = lastFinished(entry);
+    return day ? `Finished ${formatDate(day)}` : null;
+}
+
+function BookRow({ work, note }) {
     const series = seriesLabel(work.series, work.series_number);
     return (
         <Link
@@ -102,6 +129,7 @@ function BookRow({ work }) {
                 <p className="font-semibold">{work.title}</p>
                 <p className="text-sm text-ink-soft">{work.author}</p>
                 {series && <p className="text-xs text-muted">{series}</p>}
+                {note && <p className="mt-1 text-sm text-muted">{note}</p>}
             </div>
         </Link>
     );

@@ -157,6 +157,21 @@ class LoanWithBookOut(LoanOut):
 
 class ReadingStatusUpdate(BaseModel):
     status: ReadingStatus
+    # "reading": datum zacetka (privzeto danes); "read": datum zakljucka (neobvezen)
+    day: date | None = None
+
+
+class ReadingSessionUpdate(BaseModel):
+    started_at: date | None = None
+    finished_at: date | None = None
+
+
+class ReadingSessionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    started_at: date | None
+    finished_at: date | None
 
 
 class ReadingEntryOut(BaseModel):
@@ -165,6 +180,7 @@ class ReadingEntryOut(BaseModel):
     id: int
     work_id: int
     status: ReadingStatus
+    sessions: list[ReadingSessionOut]
 
 
 class ReadingItemOut(ReadingEntryOut):
