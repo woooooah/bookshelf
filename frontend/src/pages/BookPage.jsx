@@ -3,11 +3,12 @@ import { useParams } from "react-router-dom";
 import { ApiError, apiGet } from "../api.js";
 import { FORMAT_LABELS, languageName, seriesLabel } from "../books.js";
 import BookCover from "../components/BookCover.jsx";
+import LibraryStatus from "../components/LibraryStatus.jsx";
 
-// Podrobnosti knjige (wireframe 6)
+// Podrobnosti knjige
 export default function BookPage() {
     const { id } = useParams();
-    // Podatki za doloceno knjigo; ce se id ne ujema, se nalagajo
+    // Podatki za doloceno knjigo
     const [state, setState] = useState({ id: null, status: null, book: null });
 
     useEffect(() => {
@@ -70,6 +71,7 @@ export default function BookPage() {
                             <Detail label="Genre" value={book.genre} />
                         )}
                     </dl>
+                    <LibraryStatus book={book} />
                     {book.description && (
                         <p className="max-w-2xl whitespace-pre-line text-ink-soft">
                             {book.description}
