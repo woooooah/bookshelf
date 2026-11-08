@@ -11,3 +11,16 @@ services:
     # Ob zagonu izvede manjkajoce migracije, nato zazene streznik.
     # --reload: ob spremembi kode se streznik sam ponovno zazene
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      # node_modules ostanejo v containerju (paketi za Linux), ne pridejo iz mape na racunalniku
+      - /app/node_modules
+    # npm install doda nove pakete, ce se je package.json spremenil od zadnjega builda
+    command: sh -c "npm install --no-fund --no-audit && npm run dev"
+    depends_on:
+      - backend
