@@ -8,3 +8,6 @@ venv/
 
 # macOS
 .DS_Store
+
+# Firebase kljuc (skrivnost)
+firebase-service-account.json

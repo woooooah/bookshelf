@@ -1,10 +1,17 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext.js'
 
 // Header iz wireframa 1: logo, iskalno polje, Moja knjiznica, Moje branje
 export default function Header() {
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
+  const { firebaseUser, profile, loading, logout } = useAuth()
+
+  async function handleLogout() {
+    await logout()
+    navigate('/')
+  }
 
   function handleSubmit(event) {
     event.preventDefault()
@@ -35,13 +42,26 @@ export default function Header() {
           />
         </form>
 
-        <nav className="ml-auto flex gap-6">
+        <nav className="ml-auto flex items-center gap-6">
           <NavLink to="/library" className={linkClass}>
             Moja knjiznica
           </NavLink>
           <NavLink to="/reading" className={linkClass}>
             Moje branje
           </NavLink>
+          {!loading && firebaseUser && (
+            <span className="flex items-center gap-3 text-sm">
+              {profile && <span className="text-stone-600">{profile.username}</span>}
+              <button onClick={handleLogout} className="hover:text-amber-700">
+                Odjava
+              </button>
+            </span>
+          )}
+          {!loading && !firebaseUser && (
+            <NavLink to="/login" className={linkClass}>
+              Prijava
+            </NavLink>
+          )}
         </nav>
       </div>
     </header>

@@ -27,10 +27,20 @@ Dokumentacija je v mapi [`docs`](docs/):
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (mora biti zagnan)
 - [Supabase](https://supabase.com/) projekt
+- dostop do Firebase projekta `rirs-bookshelf`
 
 ### Podatkovna baza
 
 V Supabase klikni **Connect** in kopiraj niz za **Session pooler** (Direct connection deluje samo prek IPv6). Tabel ni treba ustvarjati rocno, ustvari jih Alembic ob zagonu backenda.
+
+### Firebase (prijava)
+
+Backend za preverjanje prijave potrebuje kljuc Firebase service account:
+
+1. V [Firebase konzoli](https://console.firebase.google.com/) odpri projekt, nato **Project settings → Service accounts**.
+2. Klikni **Generate new private key** in preneseno datoteko shrani kot `backend/firebase-service-account.json`.
+
+Datoteka je skrivnost in je v `.gitignore`. Brez nje se backend zazene, endpointi s prijavo pa vrnejo napako 503. Spletna konfiguracija za frontend je ze v `frontend/src/firebase.js`.
 
 ### Zagon aplikacije
 
