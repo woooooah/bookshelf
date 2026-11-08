@@ -4,6 +4,7 @@ import Layout from './components/Layout.jsx'
 import BookPage from './pages/BookPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import LibraryPage from './pages/LibraryPage.jsx'
+import LentPage from './pages/LentPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import ReadingPage from './pages/ReadingPage.jsx'
@@ -24,6 +25,7 @@ export default function App() {
         {/* Samo za prijavljene */}
         <Route element={<RequireAuth />}>
           <Route path="library" element={<LibraryPage />} />
+          <Route path="library/lent" element={<LentPage />} />
           <Route path="reading" element={<ReadingPage />} />
         </Route>
 

@@ -1,6 +1,6 @@
 """Pydantic sheme za zahteve in odgovore API-ja."""
 
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -120,7 +120,33 @@ class LibraryEdition(EditionOut):
     work: LibraryWork
 
 
+class LoanOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    borrower_name: str
+    loaned_at: date
+    returned_at: date | None
+
+
 class LibraryItemOut(LibraryBookOut):
     """Izvod v knjiznici z izdajo in delom za prikaz."""
 
     edition: LibraryEdition
+    active_loan: LoanOut | None
+
+
+# Posoje ----------------------------------------------------------------------
+
+
+class LoanCreate(BaseModel):
+    borrower_name: str = Field(min_length=1, max_length=100)
+    loaned_at: date | None = None  # privzeto danes
+
+
+class LoanReturn(BaseModel):
+    returned_at: date | None = None  # privzeto danes
+
+
+class LoanWithBookOut(LoanOut):
+    library_book: LibraryItemOut
