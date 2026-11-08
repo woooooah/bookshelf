@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import { apiFetch, apiGet } from "../api.js";
 import { FORMAT_LABELS, seriesLabel } from "../books.js";
 import BookCover from "../components/BookCover.jsx";
+import LendForm from "../components/LendForm.jsx";
+import LibraryTabs from "../components/LibraryTabs.jsx";
+import Modal from "../components/Modal.jsx";
 
 export default function LibraryPage() {
     const [state, setState] = useState({ status: "loading", items: [] });
@@ -20,6 +23,17 @@ export default function LibraryPage() {
     const { status, items } = state;
     const [removingId, setRemovingId] = useState(null);
     const [error, setError] = useState("");
+    const [lending, setLending] = useState(null);
+
+    function handleLent(loan) {
+        setState((s) => ({
+            ...s,
+            items: s.items.map((i) =>
+                i.id === lending.id ? { ...i, active_loan: loan } : i,
+            ),
+        }));
+        setLending(null);
+    }
 
     async function remove(item) {
         if (!window.confirm("Remove this book from your library?")) return;
@@ -48,6 +62,7 @@ export default function LibraryPage() {
                     </p>
                 )}
             </div>
+            <LibraryTabs />
 
             {status === "loading" && <p className="text-muted">Loading...</p>}
             {status === "error" && (
@@ -69,17 +84,24 @@ export default function LibraryPage() {
                             key={item.id}
                             item={item}
                             onRemove={() => remove(item)}
+                            onLend={() => setLending(item)}
                             removing={removingId === item.id}
                             disabled={removingId !== null}
                         />
                     ))}
                 </ul>
             )}
+            <Modal
+                open={lending !== null}
+                onClose={() => setLending(null)}
+                title="Lend book">
+                {lending && <LendForm item={lending} onLent={handleLent} />}
+            </Modal>
         </section>
     );
 }
 
-function LibraryCard({ item, onRemove, removing, disabled }) {
+function LibraryCard({ item, onRemove, onLend, removing, disabled }) {
     const { edition } = item;
     const { work } = edition;
     const title = edition.title || work.title;
@@ -103,27 +125,43 @@ function LibraryCard({ item, onRemove, removing, disabled }) {
                     <div className="flex flex-wrap gap-1 pt-1">
                         {format && <Tag>{format}</Tag>}
                         {item.location && <Tag muted>{item.location}</Tag>}
+                        {item.active_loan && (
+                            <Tag warn>Lent to: {item.active_loan.borrower_name}</Tag>
+                        )}
                     </div>
                 </div>
             </Link>
-            <button
-                type="button"
-                onClick={onRemove}
-                disabled={disabled}
-                className="mt-2 self-start text-xs text-muted hover:text-red-700 disabled:opacity-50">
-                {removing ? "Removing..." : "Remove"}
-            </button>
+            <div className="mt-2 flex gap-3 text-xs">
+                {!item.active_loan && (
+                    <button
+                        type="button"
+                        onClick={onLend}
+                        className="text-accent hover:text-accent-dark">
+                        Lend
+                    </button>
+                )}
+                <button
+                    type="button"
+                    onClick={onRemove}
+                    disabled={disabled}
+                    className="text-muted hover:text-red-700 disabled:opacity-50">
+                    {removing ? "Removing..." : "Remove"}
+                </button>
+            </div>
         </li>
     );
 }
 
-function Tag({ children, muted = false }) {
+const TAG_STYLES = {
+    default: "bg-accent-soft text-accent-dark",
+    muted: "bg-line text-ink-soft",
+    warn: "bg-loan-soft text-loan",
+};
+
+function Tag({ children, muted = false, warn = false }) {
+    const style = warn ? "warn" : muted ? "muted" : "default";
     return (
-        <span
-            className={`rounded px-2 py-0.5 text-xs ${
-                muted ? "bg-line text-ink-soft" : "bg-accent-soft text-accent-dark"
-            }`}
-        >
+        <span className={`rounded px-2 py-0.5 text-xs ${TAG_STYLES[style]}`}>
             {children}
         </span>
     );

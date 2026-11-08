@@ -206,8 +206,16 @@ class LibraryBook(Base):
     shelf: Mapped[Shelf | None] = relationship(back_populates="library_books")
     # Ob brisanju izvoda baza sama izbrise njegove posoje (ON DELETE CASCADE)
     loans: Mapped[list["Loan"]] = relationship(
-        back_populates="library_book", cascade="all, delete-orphan", passive_deletes=True
+        back_populates="library_book",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="Loan.loaned_at.desc()",
     )
+
+    @property
+    def active_loan(self) -> "Loan | None":
+        """Posoja, ki se ni vrnjena (najvec ena)."""
+        return next((loan for loan in self.loans if loan.returned_at is None), None)
 
 
 Index(None, LibraryBook.user_id)

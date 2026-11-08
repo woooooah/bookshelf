@@ -1,13 +1,16 @@
 """Moja knjiznica: knjige, ki jih ima uporabnik v lasti. Samo za prijavljene."""
 
+from datetime import date, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.auth import get_current_user
 from app.db import get_db
-from app.models import BookFormat, Edition, EditionStatus, LibraryBook, User
-from app.schemas import LibraryBookCreate, LibraryBookOut, LibraryItemOut
+from app.models import BookFormat, Edition, EditionStatus, LibraryBook, Loan, User
+from app.schemas import LibraryBookCreate, LibraryBookOut, LibraryItemOut, LoanCreate, LoanOut
 
 router = APIRouter(prefix="/library", tags=["library"])
 
@@ -23,7 +26,10 @@ def list_library(
         select(LibraryBook)
         .join(LibraryBook.edition)
         .where(LibraryBook.user_id == user.id)
-        .options(joinedload(LibraryBook.edition).joinedload(Edition.work))
+        .options(
+            joinedload(LibraryBook.edition).joinedload(Edition.work),
+            selectinload(LibraryBook.loans),
+        )
         .order_by(LibraryBook.added_at.desc(), LibraryBook.id.desc())
     )
     if work_id is not None:
@@ -38,10 +44,7 @@ def remove_from_library(
     db: Session = Depends(get_db),
 ):
     """Odstrani izvod iz knjiznice (skupaj z zgodovino posoj)."""
-    book = db.get(LibraryBook, library_book_id)
-    # Tuj izvod vrne 404, da ne razkrije, da obstaja
-    if book is None or book.user_id != user.id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Book not in your library")
+    book = _own_book(db, library_book_id, user)
     db.delete(book)
     db.commit()
 
@@ -100,3 +103,48 @@ def list_locations(user: User = Depends(get_current_user), db: Session = Depends
         .distinct()
         .order_by(LibraryBook.location)
     ).all()
+
+
+def _own_book(db: Session, library_book_id: int, user: User) -> LibraryBook:
+    book = db.get(LibraryBook, library_book_id)
+    # Tuj izvod vrne 404, da ne razkrije, da obstaja
+    if book is None or book.user_id != user.id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Book not in your library")
+    return book
+
+
+def check_not_future(day: date) -> None:
+    # En dan rezerve zaradi razlike med casovnim pasom uporabnika in streznika
+    if day > date.today() + timedelta(days=1):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Date cannot be in the future")
+
+
+@router.post(
+    "/{library_book_id}/loans", response_model=LoanOut, status_code=status.HTTP_201_CREATED
+)
+def lend_book(
+    library_book_id: int,
+    data: LoanCreate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Zabelezi posojo. Knjige ni mogoce posoditi, dokler prejsnja posoja ni vrnjena."""
+    book = _own_book(db, library_book_id, user)
+    borrower = data.borrower_name.strip()
+    if not borrower:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Borrower name is required")
+    loaned_at = data.loaned_at or date.today()
+    check_not_future(loaned_at)
+    if book.active_loan is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "already_loaned")
+
+    loan = Loan(library_book_id=book.id, borrower_name=borrower, loaned_at=loaned_at)
+    db.add(loan)
+    try:
+        db.commit()
+    except IntegrityError:
+        # Hkratna posoja iste knjige (baza dovoli samo eno aktivno)
+        db.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, "already_loaned")
+    db.refresh(loan)
+    return loan

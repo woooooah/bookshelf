@@ -12,4 +12,6 @@
     --color-accent: #3d6b57; /* gumbi, povezave, aktivni zavihek */
     --color-accent-dark: #2f5444; /* gumb ob prehodu z misko */
     --color-accent-soft: #e6eee8; /* ozadje obvestil */
+    --color-loan: #3b4f6b; /* oznaka posojene knjige */
+    --color-loan-soft: #e3e8ef;
 }
