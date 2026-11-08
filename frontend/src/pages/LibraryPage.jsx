@@ -2,7 +2,7 @@
 export default function LibraryPage() {
   return (
     <section>
-      <h1 className="text-2xl font-bold">Moja knjiznica</h1>
+      <h1 className="text-2xl font-bold">My library</h1>
     </section>
   )
 }

@@ -2,7 +2,7 @@
 export default function ReadingPage() {
   return (
     <section>
-      <h1 className="text-2xl font-bold">Moje branje</h1>
+      <h1 className="text-2xl font-bold">My reading</h1>
     </section>
   )
 }

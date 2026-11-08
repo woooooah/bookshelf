@@ -5,7 +5,7 @@ export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 export class ApiError extends Error {
   constructor(status, detail) {
-    super(typeof detail === 'string' ? detail : `Napaka ${status}`)
+    super(typeof detail === 'string' ? detail : `Error ${status}`)
     this.status = status
     this.detail = detail
   }

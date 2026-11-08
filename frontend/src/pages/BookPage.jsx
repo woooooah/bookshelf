@@ -6,7 +6,7 @@ export default function BookPage() {
 
   return (
     <section>
-      <h1 className="text-2xl font-bold">Knjiga #{id}</h1>
+      <h1 className="text-2xl font-bold">Book #{id}</h1>
     </section>
   )
 }
