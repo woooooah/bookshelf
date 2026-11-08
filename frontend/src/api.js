@@ -11,21 +11,23 @@ export class ApiError extends Error {
   }
 }
 
-// Klic backenda; ce je uporabnik prijavljen, se doda Firebase zeton
+// Klic backenda; ce je uporabnik prijavljen, se doda Firebase zeton.
+// body je objekt (poslje se kot JSON) ali FormData (nalaganje datotek).
 export async function apiFetch(path, { method = 'GET', body } = {}) {
   const headers = {}
   const user = auth.currentUser
   if (user) {
     headers.Authorization = `Bearer ${await user.getIdToken()}`
   }
-  if (body !== undefined) {
+  const isForm = body instanceof FormData
+  if (body !== undefined && !isForm) {
     headers['Content-Type'] = 'application/json'
   }
 
   const response = await fetch(`${API_URL}${path}`, {
     method,
     headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined || isForm ? body : JSON.stringify(body),
   })
 
   const data = response.status === 204 ? null : await response.json().catch(() => null)

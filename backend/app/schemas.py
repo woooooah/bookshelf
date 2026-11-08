@@ -198,3 +198,28 @@ class ReadingGoalOut(BaseModel):
     year: int
     target_books: int | None  # None = cilj za to leto se ni nastavljen
     read_count: int  # branja z datumom zakljucka v tem letu (tudi ponovna)
+
+
+# Uvoz iz Goodreadsa -----------------------------------------------------------
+
+
+class ImportRow(BaseModel):
+    row: int  # vrstica v CSV datoteki
+    goodreads_id: str
+    title: str
+    author: str
+    isbn: str | None
+    status: ReadingStatus
+    date_read: date | None
+
+
+class SkippedRow(BaseModel):
+    row: int
+    title: str
+    author: str
+    reason: str
+
+
+class ImportPreview(BaseModel):
+    rows: list[ImportRow]
+    skipped: list[SkippedRow]

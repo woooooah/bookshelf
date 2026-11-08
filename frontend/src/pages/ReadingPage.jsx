@@ -44,7 +44,12 @@ export default function ReadingPage() {
         <section className="space-y-10">
             <div className="grid gap-8 lg:grid-cols-[1fr_18rem]">
             <div className="space-y-4">
-                <h1 className="text-2xl font-bold">My reading</h1>
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <h1 className="text-2xl font-bold">My reading</h1>
+                    <Link to="/import" className="text-sm text-accent underline">
+                        Import from Goodreads
+                    </Link>
+                </div>
                 <h2 className="text-lg font-semibold">Currently reading</h2>
                 {reading.length === 0 ? (
                     <p className="text-muted">
