@@ -144,5 +144,9 @@ class LoanCreate(BaseModel):
     loaned_at: date | None = None  # privzeto danes
 
 
+class LoanReturn(BaseModel):
+    returned_at: date | None = None  # privzeto danes
+
+
 class LoanWithBookOut(LoanOut):
     library_book: LibraryItemOut
