@@ -1,6 +1,7 @@
 """Klici Open Library API (ADR-0007) in pretvorba odgovorov v nase podatke.
 
 Podatki Open Library so nedosledni (format, serija, zanr), zato jih tu pocistimo.
+Uporabljamo samo knjige in izdaje z ISBN; ostale (npr. plakati, stari tiski) preskocimo.
 """
 
 import re
@@ -160,11 +161,11 @@ def parse_edition(data: dict) -> dict:
 
 
 def search(query: str, limit: int) -> list[dict]:
-    """Iskanje del. Serija je znana samo, ce ima delo oznako 'series:'."""
+    """Iskanje del z vsaj eno izdajo z ISBN. Serija je znana samo, ce ima delo oznako 'series:'."""
     data = _get(
         "/search.json",
         {
-            "q": query,
+            "q": f"{query} isbn:*",
             "limit": limit,
             "fields": "key,title,author_name,cover_i,first_publish_year,subject",
         },
@@ -187,9 +188,18 @@ def search(query: str, limit: int) -> list[dict]:
 
 
 def fetch_work(work_key: str) -> dict | None:
-    """Delo z avtorji in izdajami, pripravljeno za shranjevanje. None, ce ne obstaja."""
+    """Delo z avtorji in izdajami z ISBN, pripravljeno za shranjevanje.
+
+    None, ce delo ne obstaja ali nima nobene izdaje z ISBN.
+    """
     work = _get(f"{work_key}.json")
     if work is None or work.get("type", {}).get("key") == "/type/redirect":
+        return None
+
+    editions_data = _get(f"{work_key}/editions.json", {"limit": MAX_EDITIONS}) or {}
+    editions = [parse_edition(e) for e in editions_data.get("entries", [])]
+    editions = [e for e in editions if e["isbn"]]
+    if not editions:
         return None
 
     authors = []
@@ -198,9 +208,6 @@ def fetch_work(work_key: str) -> dict | None:
         author = _get(f"{key}.json") if key else None
         if author and author.get("name"):
             authors.append(author["name"])
-
-    editions_data = _get(f"{work_key}/editions.json", {"limit": MAX_EDITIONS}) or {}
-    editions = [parse_edition(e) for e in editions_data.get("entries", [])]
 
     subjects = work.get("subjects") or []
     series, number = _split_series(_tagged(subjects, "series") or "")
