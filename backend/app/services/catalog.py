@@ -32,7 +32,11 @@ def find_edition_by_isbn(db: Session, isbn13: str) -> Edition | None:
 
 
 def _add_editions(db: Session, work: Work, editions: list[dict]) -> None:
-    """Doda izdaje, ki jih se ni v bazi (ISBN in kljuc Open Library sta unikatna)."""
+    """Doda izdaje, ki jih se ni v bazi (ISBN in kljuc Open Library sta unikatna).
+
+    Izdaje brez ISBN se ne shranijo.
+    """
+    editions = [e for e in editions if e["isbn"]]
     isbns = {e["isbn"] for e in editions if e["isbn"]}
     keys = {e["openlibrary_key"] for e in editions if e["openlibrary_key"]}
     existing = db.execute(
