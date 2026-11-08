@@ -4,7 +4,7 @@ BookShelf je spletna aplikacija za ljubitelje in zbiratelje knjig. Uporabnik v n
 
 ## Tehnologije
 
-- **Frontend:** React (Vite)
+- **Frontend:** React (Vite), React Router, Tailwind CSS
 - **Backend:** Python (FastAPI)
 - **Podatkovna baza:** PostgreSQL (Supabase)
 - **Avtentikacija:** Firebase Authentication
@@ -32,22 +32,26 @@ Dokumentacija je v mapi [`docs`](docs/):
 
 V Supabase klikni **Connect** in kopiraj niz za **Session pooler** (Direct connection deluje samo prek IPv6). Tabel ni treba ustvarjati rocno, ustvari jih Alembic ob zagonu backenda.
 
-### Backend
+### Zagon aplikacije
 
-1. Ustvari datoteko z nastavitvami in v `DATABASE_URL` prilepi niz iz Supabase (z vpisanim geslom):
+1. Ustvari datoteko z nastavitvami backenda in v `DATABASE_URL` prilepi niz iz Supabase (z vpisanim geslom):
    ```bash
    cp backend/.env.example backend/.env
    ```
-2. Zazeni backend:
+2. Zazeni backend in frontend:
    ```bash
    docker compose up --build
    ```
-3. API je dosegljiv na `http://localhost:8000`:
-   - `http://localhost:8000/health` – preverjanje delovanja
-   - `http://localhost:8000/health/db` – preverjanje povezave z bazo
+3. Aplikacija je dosegljiva na:
+   - `http://localhost:5173` – frontend (na zacetni strani je izpisano, ali backend in baza delujeta)
    - `http://localhost:8000/docs` – samodejna dokumentacija API-ja
+   - `http://localhost:8000/health/db` – preverjanje povezave z bazo
 
-Ob spremembi kode v `backend/` se streznik sam ponovno zazene. Ustavis ga s `Ctrl+C` ali `docker compose down`.
+Ob spremembi kode v `backend/` ali `frontend/` se aplikacija sama osvezi. Ustavis jo s `Ctrl+C` ali `docker compose down`.
+
+Frontend privzeto klice backend na `http://localhost:8000`. Ce je backend drugje, kopiraj `frontend/.env.example` v `frontend/.env.local` in spremeni `VITE_API_URL`.
+
+Nov npm paket dodas z `docker compose exec frontend npm install <paket>`; ob naslednjem zagonu ga container namesti sam.
 
 ### Migracije baze (Alembic)
 
