@@ -13,7 +13,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  if (loading) return <p className="text-stone-500">Nalagam...</p>
+  if (loading) return <p className="text-stone-500">Loading...</p>
   if (profile) return <Navigate to={location.state?.from?.pathname ?? '/'} replace />
 
   // Prijavljen v Firebase, a brez uporabniskega imena: manjka samo se ime
@@ -35,19 +35,18 @@ export default function RegisterPage() {
   return (
     <section className="mx-auto max-w-sm space-y-6">
       <h1 className="text-2xl font-bold">
-        {onlyUsername ? 'Izberi uporabnisko ime' : 'Registracija'}
+        {onlyUsername ? 'Choose a username' : 'Sign up'}
       </h1>
       {onlyUsername && (
         <p className="text-sm text-stone-600">
-          Prijavljen si kot {firebaseUser.email}. Za dokoncanje registracije izberi uporabnisko
-          ime.
+          You are logged in as {firebaseUser.email}. Choose a username to finish signing up.
         </p>
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
         {!onlyUsername && (
           <>
             <FormField
-              label="E-naslov"
+              label="Email"
               type="email"
               autoComplete="email"
               required
@@ -55,7 +54,7 @@ export default function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
             />
             <FormField
-              label="Geslo (vsaj 6 znakov)"
+              label="Password (at least 6 characters)"
               type="password"
               autoComplete="new-password"
               required
@@ -66,13 +65,13 @@ export default function RegisterPage() {
           </>
         )}
         <FormField
-          label="Uporabnisko ime"
+          label="Username"
           autoComplete="username"
           required
           minLength={3}
           maxLength={30}
           pattern="[A-Za-z0-9._\-]+"
-          title="Crke, stevke, pika, podcrtaj ali vezaj"
+          title="Letters, numbers, dots, underscores or hyphens"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
@@ -82,18 +81,18 @@ export default function RegisterPage() {
           disabled={submitting}
           className="w-full rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-50"
         >
-          {submitting ? 'Shranjujem...' : 'Ustvari racun'}
+          {submitting ? 'Saving...' : 'Create account'}
         </button>
       </form>
       {onlyUsername ? (
         <button onClick={logout} className="text-sm text-stone-600 underline">
-          Odjava
+          Log out
         </button>
       ) : (
         <p className="text-sm text-stone-600">
-          Ze imas racun?{' '}
+          Already have an account?{' '}
           <Link to="/login" state={location.state} className="text-amber-700 underline">
-            Prijava
+            Log in
           </Link>
         </p>
       )}

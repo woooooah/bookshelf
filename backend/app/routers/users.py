@@ -19,18 +19,18 @@ def register(
 ):
     """Po registraciji v Firebase ustvari uporabnika v nasi bazi (id = Firebase UID)."""
     if db.get(User, claims["uid"]) is not None:
-        raise HTTPException(status.HTTP_409_CONFLICT, "Uporabnik je ze registriran")
+        raise HTTPException(status.HTTP_409_CONFLICT, "User is already registered")
 
     email = claims.get("email")
     if not email:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Racun nima e-poste")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Account has no email address")
 
     # Uporabnisko ime je unikatno ne glede na velike in male crke
     taken = db.scalar(
         select(User.id).where(func.lower(User.username) == data.username.lower())
     )
     if taken:
-        raise HTTPException(status.HTTP_409_CONFLICT, "Uporabnisko ime je ze zasedeno")
+        raise HTTPException(status.HTTP_409_CONFLICT, "Username is already taken")
 
     user = User(id=claims["uid"], username=data.username, email=email)
     db.add(user)
@@ -39,7 +39,7 @@ def register(
     except IntegrityError:
         # Hkratna registracija z enakim imenom ali racunom
         db.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, "Uporabnisko ime je ze zasedeno")
+        raise HTTPException(status.HTTP_409_CONFLICT, "Username is already taken")
     db.refresh(user)
     return user
 

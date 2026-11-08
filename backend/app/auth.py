@@ -40,13 +40,13 @@ def get_token_claims(
 ) -> dict:
     """Preveri Firebase zeton in vrne njegovo vsebino (uid, email ...). Brez zetona: 401."""
     if firebase_app is None:
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Firebase ni nastavljen")
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Firebase is not configured")
     if token is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Prijava je obvezna")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Login required")
     try:
         return firebase_auth.verify_id_token(token.credentials, app=firebase_app)
     except (ValueError, firebase_auth.InvalidIdTokenError, firebase_auth.ExpiredIdTokenError):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Neveljaven ali potekel zeton")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or expired token")
 
 
 def get_current_user(
@@ -59,5 +59,5 @@ def get_current_user(
         # Frontend po tej napaki uporabnika poslje na izbiro uporabniskega imena
         raise HTTPException(status.HTTP_403_FORBIDDEN, "not_registered")
     if user.blocked:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Uporabnik je blokiran")
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "User is blocked")
     return user

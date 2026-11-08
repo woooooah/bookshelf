@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext.js'
 
-// Header iz wireframa 1: logo, iskalno polje, Moja knjiznica, Moje branje
+// Header iz wireframa 1: logo, iskalno polje, My library, My reading
 export default function Header() {
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
@@ -36,30 +36,30 @@ export default function Header() {
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Isci po naslovu, avtorju ali ISBN"
-            aria-label="Iskanje knjig"
+            placeholder="Search by title, author or ISBN"
+            aria-label="Search books"
             className="w-full max-w-md rounded-md border border-stone-300 px-3 py-2 focus:border-amber-600 focus:outline-none"
           />
         </form>
 
         <nav className="ml-auto flex items-center gap-6">
           <NavLink to="/library" className={linkClass}>
-            Moja knjiznica
+            My library
           </NavLink>
           <NavLink to="/reading" className={linkClass}>
-            Moje branje
+            My reading
           </NavLink>
           {!loading && firebaseUser && (
             <span className="flex items-center gap-3 text-sm">
               {profile && <span className="text-stone-600">{profile.username}</span>}
               <button onClick={handleLogout} className="hover:text-amber-700">
-                Odjava
+                Log out
               </button>
             </span>
           )}
           {!loading && !firebaseUser && (
             <NavLink to="/login" className={linkClass}>
-              Prijava
+              Log in
             </NavLink>
           )}
         </nav>

@@ -33,10 +33,10 @@ export default function LoginPage() {
 
   return (
     <section className="mx-auto max-w-sm space-y-6">
-      <h1 className="text-2xl font-bold">Prijava</h1>
+      <h1 className="text-2xl font-bold">Log in</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <FormField
-          label="E-naslov"
+          label="Email"
           type="email"
           autoComplete="email"
           required
@@ -44,7 +44,7 @@ export default function LoginPage() {
           onChange={(e) => setEmail(e.target.value)}
         />
         <FormField
-          label="Geslo"
+          label="Password"
           type="password"
           autoComplete="current-password"
           required
@@ -57,13 +57,13 @@ export default function LoginPage() {
           disabled={submitting}
           className="w-full rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-50"
         >
-          {submitting ? 'Prijavljam...' : 'Prijava'}
+          {submitting ? 'Logging in...' : 'Log in'}
         </button>
       </form>
       <p className="text-sm text-stone-600">
-        Nimas racuna?{' '}
+        Don't have an account?{' '}
         <Link to="/register" state={location.state} className="text-amber-700 underline">
-          Registracija
+          Sign up
         </Link>
       </p>
     </section>
