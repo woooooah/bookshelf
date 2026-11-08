@@ -1,15 +1,49 @@
-"""Moja knjiznica: knjige, ki jih ima uporabnik v lasti (US-04). Samo za prijavljene."""
+"""Moja knjiznica: knjige, ki jih ima uporabnik v lasti. Samo za prijavljene."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.auth import get_current_user
 from app.db import get_db
 from app.models import BookFormat, Edition, EditionStatus, LibraryBook, User
-from app.schemas import LibraryBookCreate, LibraryBookOut
+from app.schemas import LibraryBookCreate, LibraryBookOut, LibraryItemOut
 
 router = APIRouter(prefix="/library", tags=["library"])
+
+
+@router.get("", response_model=list[LibraryItemOut])
+def list_library(
+    work_id: int | None = Query(default=None, description="Samo izvodi tega dela"),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Izvodi uporabnika, najnovejsi prvi."""
+    query = (
+        select(LibraryBook)
+        .join(LibraryBook.edition)
+        .where(LibraryBook.user_id == user.id)
+        .options(joinedload(LibraryBook.edition).joinedload(Edition.work))
+        .order_by(LibraryBook.added_at.desc(), LibraryBook.id.desc())
+    )
+    if work_id is not None:
+        query = query.where(Edition.work_id == work_id)
+    return db.scalars(query).all()
+
+
+@router.delete("/{library_book_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_from_library(
+    library_book_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Odstrani izvod iz knjiznice (skupaj z zgodovino posoj)."""
+    book = db.get(LibraryBook, library_book_id)
+    # Tuj izvod vrne 404, da ne razkrije, da obstaja
+    if book is None or book.user_id != user.id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Book not in your library")
+    db.delete(book)
+    db.commit()
 
 
 def _clean(text: str | None) -> str | None:

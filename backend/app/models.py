@@ -204,7 +204,10 @@ class LibraryBook(Base):
     user: Mapped[User] = relationship(back_populates="library_books")
     edition: Mapped[Edition] = relationship()
     shelf: Mapped[Shelf | None] = relationship(back_populates="library_books")
-    loans: Mapped[list["Loan"]] = relationship(back_populates="library_book")
+    # Ob brisanju izvoda baza sama izbrise njegove posoje (ON DELETE CASCADE)
+    loans: Mapped[list["Loan"]] = relationship(
+        back_populates="library_book", cascade="all, delete-orphan", passive_deletes=True
+    )
 
 
 Index(None, LibraryBook.user_id)

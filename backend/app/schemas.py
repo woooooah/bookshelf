@@ -88,7 +88,7 @@ class LibraryBookCreate(BaseModel):
     notes: str | None = Field(default=None, max_length=2000)
     height_mm: int | None = Field(default=None, gt=0, le=1000)
     thickness_mm: int | None = Field(default=None, gt=0, le=500)
-    # Ce uporabnik izdajo ze ima, se nov izvod doda samo s potrditvijo (US-04)
+    # Ce uporabnik izdajo ze ima, se nov izvod doda samo s potrditvijo
     confirm_duplicate: bool = False
 
 
@@ -102,3 +102,25 @@ class LibraryBookOut(BaseModel):
     height_mm: int | None
     thickness_mm: int | None
     added_at: datetime
+
+
+class LibraryWork(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    author: str
+    series: str | None
+    series_number: int | None
+    genre: str | None
+    cover_url: str | None
+
+
+class LibraryEdition(EditionOut):
+    work: LibraryWork
+
+
+class LibraryItemOut(LibraryBookOut):
+    """Izvod v knjiznici z izdajo in delom za prikaz."""
+
+    edition: LibraryEdition
