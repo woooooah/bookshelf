@@ -1,14 +1,22 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ApiError, apiGet } from "../api.js";
+import { useAuth } from "../auth/AuthContext.js";
 import { FORMAT_LABELS, languageName, seriesLabel } from "../books.js";
+import AddToLibraryForm from "../components/AddToLibraryForm.jsx";
 import BookCover from "../components/BookCover.jsx";
+import Modal from "../components/Modal.jsx";
 
-// Podrobnosti knjige (wireframe 6)
+// Podrobnosti knjige
 export default function BookPage() {
     const { id } = useParams();
-    // Podatki za doloceno knjigo; ce se id ne ujema, se nalagajo
+    // Podatki za doloceno knjigo
     const [state, setState] = useState({ id: null, status: null, book: null });
+    const [addOpen, setAddOpen] = useState(false);
+    const [added, setAdded] = useState(false);
+    const { profile } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
         let ignore = false;
@@ -45,6 +53,16 @@ export default function BookPage() {
     const { book } = state;
     const series = seriesLabel(book.series, book.series_number);
 
+    // Neprijavljen uporabnik gre na prijavo in se nato vrne na to knjigo
+    function openAddToLibrary() {
+        if (!profile) {
+            navigate("/login", { state: { from: location } });
+            return;
+        }
+        setAdded(false);
+        setAddOpen(true);
+    }
+
     return (
         <article className="space-y-10">
             <div className="flex flex-col gap-8 sm:flex-row">
@@ -70,6 +88,22 @@ export default function BookPage() {
                             <Detail label="Genre" value={book.genre} />
                         )}
                     </dl>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={openAddToLibrary}
+                            className="rounded-md bg-accent px-4 py-2 font-medium text-white hover:bg-accent-dark">
+                            I own this
+                        </button>
+                        {added && (
+                            <p className="text-sm text-accent-dark">
+                                Added to your library.{" "}
+                                <Link to="/library" className="underline">
+                                    Go to My library
+                                </Link>
+                            </p>
+                        )}
+                    </div>
                     {book.description && (
                         <p className="max-w-2xl whitespace-pre-line text-ink-soft">
                             {book.description}
@@ -77,6 +111,19 @@ export default function BookPage() {
                     )}
                 </div>
             </div>
+
+            <Modal
+                open={addOpen}
+                onClose={() => setAddOpen(false)}
+                title="Add to library">
+                <AddToLibraryForm
+                    book={book}
+                    onAdded={() => {
+                        setAddOpen(false);
+                        setAdded(true);
+                    }}
+                />
+            </Modal>
 
             {/* Seznam izdaj je privzeto zaprt; odpre se s klikom */}
             <details className="group rounded-md border border-line bg-paper">

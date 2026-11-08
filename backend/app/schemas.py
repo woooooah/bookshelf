@@ -1,5 +1,7 @@
 """Pydantic sheme za zahteve in odgovore API-ja."""
 
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models import BookFormat, UserRole
@@ -75,3 +77,28 @@ class BookDetail(BaseModel):
     first_publish_year: int | None
     openlibrary_key: str | None
     editions: list[EditionOut]
+
+
+# Knjiznica -------------------------------------------------------------------
+
+
+class LibraryBookCreate(BaseModel):
+    edition_id: int
+    location: str | None = Field(default=None, max_length=200)
+    notes: str | None = Field(default=None, max_length=2000)
+    height_mm: int | None = Field(default=None, gt=0, le=1000)
+    thickness_mm: int | None = Field(default=None, gt=0, le=500)
+    # Ce uporabnik izdajo ze ima, se nov izvod doda samo s potrditvijo (US-04)
+    confirm_duplicate: bool = False
+
+
+class LibraryBookOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    edition_id: int
+    location: str | None
+    notes: str | None
+    height_mm: int | None
+    thickness_mm: int | None
+    added_at: datetime
