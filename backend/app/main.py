@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.db import get_db
-from app.routers import users
+from app.routers import books, users
 
 app = FastAPI(title=settings.app_name)
 
@@ -18,6 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(books.router)
 app.include_router(users.router)
 
 

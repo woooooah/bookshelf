@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models import UserRole
+from app.models import BookFormat, UserRole
 
 
 class UserCreate(BaseModel):
@@ -18,3 +18,60 @@ class UserOut(BaseModel):
     email: str
     role: UserRole
     profile_public: bool
+
+
+# Knjige ----------------------------------------------------------------------
+
+
+class SearchResult(BaseModel):
+    """Zadetek iskanja: delo iz kataloga (work_id) ali iz Open Library (samo openlibrary_key)."""
+
+    work_id: int | None = None
+    edition_id: int | None = None  # samo pri iskanju po ISBN
+    openlibrary_key: str | None = None
+    title: str
+    author: str
+    series: str | None = None
+    series_number: int | None = None
+    cover_url: str | None = None
+    first_publish_year: int | None = None
+    isbn: str | None = None
+
+
+class SearchResponse(BaseModel):
+    results: list[SearchResult]
+    openlibrary_error: bool = False  # Open Library ni bil dosegljiv; prikazan je samo katalog
+
+
+class ImportRequest(BaseModel):
+    openlibrary_key: str = Field(pattern=r"^/works/OL\d+W$")
+
+
+class EditionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str | None
+    isbn: str | None
+    publisher: str | None
+    publish_year: int | None
+    page_count: int | None
+    language: str | None
+    cover_url: str | None
+    format: BookFormat | None
+
+
+class BookDetail(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    author: str
+    genre: str | None
+    series: str | None
+    series_number: int | None
+    description: str | None
+    cover_url: str | None
+    first_publish_year: int | None
+    openlibrary_key: str | None
+    editions: list[EditionOut]

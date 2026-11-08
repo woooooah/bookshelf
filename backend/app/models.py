@@ -108,9 +108,13 @@ class Work(Base):
     series: Mapped[str | None] = mapped_column(Text)
     series_number: Mapped[int | None]
     description: Mapped[str | None] = mapped_column(Text)
+    cover_url: Mapped[str | None] = mapped_column(Text)  # glavna naslovnica dela
+    first_publish_year: Mapped[int | None]
     openlibrary_key: Mapped[str | None] = mapped_column(Text, unique=True)  # /works/OL66554W
 
-    editions: Mapped[list["Edition"]] = relationship(back_populates="work")
+    editions: Mapped[list["Edition"]] = relationship(
+        back_populates="work", order_by="Edition.publish_year.desc().nulls_last()"
+    )
 
 
 class PublisherCollection(Base):
@@ -129,6 +133,7 @@ class Edition(Base):
 
     id: Mapped[int] = id_column()
     work_id: Mapped[int] = fk("works.id", "CASCADE")
+    title: Mapped[str | None] = mapped_column(Text)  # naslov izdaje (npr. prevod); prazno = naslov dela
     isbn: Mapped[str | None] = mapped_column(Text, unique=True)  # starejse knjige ga nimajo
     # npr. /books/OL7353617M, za izdaje brez ISBN
     openlibrary_key: Mapped[str | None] = mapped_column(Text, unique=True)

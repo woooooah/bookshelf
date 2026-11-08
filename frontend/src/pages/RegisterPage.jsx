@@ -13,7 +13,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  if (loading) return <p className="text-stone-500">Loading...</p>
+  if (loading) return <p className="text-muted">Loading...</p>
   if (profile) return <Navigate to={location.state?.from?.pathname ?? '/'} replace />
 
   // Prijavljen v Firebase, a brez uporabniskega imena: manjka samo se ime
@@ -38,7 +38,7 @@ export default function RegisterPage() {
         {onlyUsername ? 'Choose a username' : 'Sign up'}
       </h1>
       {onlyUsername && (
-        <p className="text-sm text-stone-600">
+        <p className="text-sm text-muted">
           You are logged in as {firebaseUser.email}. Choose a username to finish signing up.
         </p>
       )}
@@ -79,19 +79,19 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-50"
+          className="w-full rounded-md bg-accent px-4 py-2 font-medium text-white hover:bg-accent-dark disabled:opacity-50"
         >
           {submitting ? 'Saving...' : 'Create account'}
         </button>
       </form>
       {onlyUsername ? (
-        <button onClick={logout} className="text-sm text-stone-600 underline">
+        <button onClick={logout} className="text-sm text-muted underline">
           Log out
         </button>
       ) : (
-        <p className="text-sm text-stone-600">
+        <p className="text-sm text-muted">
           Already have an account?{' '}
-          <Link to="/login" state={location.state} className="text-amber-700 underline">
+          <Link to="/login" state={location.state} className="text-accent underline">
             Log in
           </Link>
         </p>
