@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
     # Povezava do PostgreSQL (Supabase), glej .env.example
     database_url: str
+    # Kljuc Firebase service account (Project settings -> Service accounts), pot glede na backend/
+    firebase_credentials: str = "firebase-service-account.json"
 
     @property
     def cors_origin_list(self) -> list[str]:
