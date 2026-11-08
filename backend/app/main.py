@@ -1,7 +1,11 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.db import get_db
 
 app = FastAPI(title=settings.app_name)
 
@@ -17,3 +21,13 @@ app.add_middleware(
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/health/db")
+def health_db(db: Session = Depends(get_db)):
+    """Preveri, ali se backend lahko poveze z bazo."""
+    try:
+        db.execute(text("select 1"))
+    except SQLAlchemyError:
+        raise HTTPException(status_code=503, detail="Povezava z bazo ni uspela")
+    return {"status": "ok", "database": "connected"}
