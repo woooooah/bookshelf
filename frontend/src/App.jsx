@@ -7,6 +7,7 @@ import LibraryPage from './pages/LibraryPage.jsx'
 import LentPage from './pages/LentPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
+import ImportPage from './pages/ImportPage.jsx'
 import ReadingPage from './pages/ReadingPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import SearchPage from './pages/SearchPage.jsx'
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="library" element={<LibraryPage />} />
           <Route path="library/lent" element={<LentPage />} />
           <Route path="reading" element={<ReadingPage />} />
+          <Route path="import" element={<ImportPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

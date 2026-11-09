@@ -106,4 +106,5 @@ def get_book(work_id: int, db: Session = Depends(get_db)):
     work = db.get(Work, work_id)
     if work is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Book not found")
+    catalog.load_details(db, work)
     return _detail(work)
