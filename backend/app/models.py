@@ -111,6 +111,9 @@ class Work(Base):
     cover_url: Mapped[str | None] = mapped_column(Text)  # glavna naslovnica dela
     first_publish_year: Mapped[int | None]
     openlibrary_key: Mapped[str | None] = mapped_column(Text, unique=True)  # /works/OL66554W
+    # False: shranjeni so samo osnovni podatki (npr. ob uvozu); opis in izdaje se
+    # prenesejo ob prvem ogledu knjige
+    details_loaded: Mapped[bool] = mapped_column(server_default=text("true"))
 
     editions: Mapped[list["Edition"]] = relationship(
         back_populates="work", order_by="Edition.publish_year.desc().nulls_last()"

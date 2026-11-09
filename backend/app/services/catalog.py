@@ -66,10 +66,26 @@ def import_work(db: Session, work_key: str, extra_edition: dict | None = None) -
     med prvimi izdajami dela.
     """
     work = db.scalar(select(Work).where(Work.openlibrary_key == work_key))
+    if work is not None and extra_edition is None:
+        return work
+    data = None if work is not None else openlibrary.fetch_work(work_key)
+    if work is None and data is None:
+        return None
+    return save_work(db, work_key, data, extra_edition)
+
+
+def save_work(
+    db: Session, work_key: str, data: dict | None, extra_edition: dict | None = None
+) -> Work | None:
+    """Shrani ze preneseno delo (data iz openlibrary.fetch_work) in dodatno izdajo.
+
+    Ce delo v bazi ze obstaja, se mu doda samo extra_edition.
+    """
+    work = db.scalar(select(Work).where(Work.openlibrary_key == work_key))
     if work is None:
-        data = openlibrary.fetch_work(work_key)
         if data is None:
             return None
+        data = dict(data)
         editions = data.pop("editions")
         work = Work(**data)
         db.add(work)
@@ -87,3 +103,29 @@ def import_work(db: Session, work_key: str, extra_edition: dict | None = None) -
         return db.scalar(select(Work).where(Work.openlibrary_key == work_key))
     db.refresh(work)
     return work
+
+
+def load_details(db: Session, work: Work) -> None:
+    """Delu, shranjenemu z osnovnimi podatki, doda opis in izdaje iz Open Library.
+
+    Ce Open Library ni dosegljiv, ostane pri osnovnih podatkih in poskusi ob naslednjem ogledu.
+    """
+    if work.details_loaded or not work.openlibrary_key:
+        return
+    try:
+        data = openlibrary.fetch_work(work.openlibrary_key)
+    except openlibrary.OpenLibraryError:
+        return
+    if data is not None:
+        editions = data.pop("editions")
+        for field in ("description", "genre", "cover_url", "first_publish_year"):
+            if getattr(work, field) is None:
+                setattr(work, field, data[field])
+        if work.series is None:
+            work.series, work.series_number = data["series"], data["series_number"]
+        elif work.series_number is None and data["series"] == work.series:
+            work.series_number = data["series_number"]
+        _add_editions(db, work, editions)
+    work.details_loaded = True
+    db.commit()
+    db.refresh(work)

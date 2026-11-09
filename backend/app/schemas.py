@@ -1,6 +1,7 @@
 """Pydantic sheme za zahteve in odgovore API-ja."""
 
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -223,3 +224,19 @@ class SkippedRow(BaseModel):
 class ImportPreview(BaseModel):
     rows: list[ImportRow]
     skipped: list[SkippedRow]
+
+
+class ImportBatch(BaseModel):
+    rows: list[ImportRow] = Field(max_length=20)
+
+
+class ImportResult(BaseModel):
+    row: int
+    title: str
+    author: str
+    result: Literal["imported", "existing", "unrecognized"]
+    work_id: int | None
+
+
+class ImportBatchResult(BaseModel):
+    results: list[ImportResult]

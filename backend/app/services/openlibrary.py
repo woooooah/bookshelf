@@ -5,6 +5,8 @@ Uporabljamo samo knjige in izdaje z ISBN; ostale (npr. plakati, stari tiski) pre
 """
 
 import re
+import time
+import unicodedata
 from collections import Counter
 
 import httpx
@@ -29,16 +31,27 @@ class OpenLibraryError(Exception):
 
 
 def _get(path: str, params: dict | None = None) -> dict | None:
-    """GET zahteva; vrne None, ce vir ne obstaja (404)."""
-    try:
-        response = _client.get(path, params=params)
-    except httpx.HTTPError as exc:
-        raise OpenLibraryError(str(exc)) from exc
-    if response.status_code == 404:
-        return None
-    if response.status_code >= 400:
-        raise OpenLibraryError(f"{path}: {response.status_code}")
-    return response.json()
+    """GET zahteva; vrne None, ce vir ne obstaja (404).
+
+    Ob preobremenitvi (429, 503) poskusi se dvakrat, z vse daljsim premorom.
+    """
+    for attempt in range(3):
+        try:
+            response = _client.get(path, params=params)
+        except httpx.HTTPError as exc:
+            if attempt == 2:
+                raise OpenLibraryError(str(exc)) from exc
+            time.sleep(1 + attempt)
+            continue
+        if response.status_code in (429, 503) and attempt < 2:
+            time.sleep(2 + 2 * attempt)
+            continue
+        if response.status_code == 404:
+            return None
+        if response.status_code >= 400:
+            raise OpenLibraryError(f"{path}: {response.status_code}")
+        return response.json()
+    raise OpenLibraryError(f"{path}: no response")
 
 
 # Pomozne funkcije --------------------------------------------------------------
@@ -254,3 +267,86 @@ def fetch_edition_by_isbn(isbn: str) -> dict | None:
     edition["isbn"] = isbn
     edition["work_key"] = data["works"][0]["key"]
     return edition
+
+
+def _normalize(text: str) -> str:
+    """Male crke brez locil in naglasov: 'Ichirō Kishimi' -> 'ichiro kishimi'."""
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
+
+
+LOOKUP_FIELDS = (
+    "key,title,author_name,cover_i,first_publish_year,subject,"
+    "editions,editions.key,editions.title,editions.isbn,editions.publisher,"
+    "editions.publish_date,editions.language,editions.cover_i"
+)
+
+
+def _light_work(doc: dict) -> dict:
+    """Osnovni podatki dela in najdene izdaje iz enega zadetka iskanja."""
+    subjects = doc.get("subject") or []
+    series, number = _split_series(_tagged(subjects, "series") or "")
+    edition_doc = ((doc.get("editions") or {}).get("docs") or [{}])[0]
+    languages = edition_doc.get("language") or []
+    edition = {
+        "openlibrary_key": edition_doc.get("key"),
+        "title": (edition_doc.get("title") or "").strip() or None,
+        "isbn": next(filter(None, map(to_isbn13, edition_doc.get("isbn") or [])), None),
+        "publisher": (edition_doc.get("publisher") or [None])[0],
+        "publish_year": _year(" ".join(edition_doc.get("publish_date") or [])),
+        "page_count": None,
+        "language": languages[0] if languages else None,
+        "cover_url": _cover([edition_doc.get("cover_i")]),
+        "format": None,
+    }
+    return {
+        "openlibrary_key": doc["key"],
+        "title": doc.get("title") or "Untitled",
+        "author": ", ".join((doc.get("author_name") or [])[:3]) or "Unknown author",
+        "genre": _genre(subjects),
+        "series": series,
+        "series_number": number,
+        "description": None,
+        "cover_url": _cover([doc.get("cover_i")]),
+        "first_publish_year": doc.get("first_publish_year"),
+        "details_loaded": False,
+        "editions": [edition] if edition["isbn"] else [],
+    }
+
+
+def _author_matches(doc: dict, author: str) -> bool:
+    surname = _normalize(author).split(" ")[-1]
+    names = _normalize(" ".join(doc.get("author_name") or []))
+    return bool(surname) and surname in names.split(" ")
+
+
+def lookup(isbn: str | None = None, title: str | None = None, author: str | None = None) -> dict | None:
+    """Poisce delo z enim klicem: po ISBN ali po naslovu in avtorju.
+
+    Vrne osnovne podatke dela (brez opisa in vseh izdaj) ali None.
+    Pri iskanju po naslovu mora zadetek imeti istega avtorja (po priimku) in biti prvi
+    zadetek ali imeti podoben naslov. Open Library ima delo pogosto pod drugim naslovom
+    (npr. "1984" -> "Nineteen Eighty-Four", prevodi pod izvirnim naslovom).
+    Brez avtorja se uposteva samo enak naslov.
+    """
+    if isbn:
+        query = f"isbn:{isbn}"
+    else:
+        wanted = _normalize(title or "")
+        if not wanted:
+            return None
+        # Narekovaji bi pokvarili iskalno poizvedbo
+        query = f'title:"{title.replace(chr(34), " ")}" isbn:*'
+    data = _get("/search.json", {"q": query, "limit": 5, "fields": LOOKUP_FIELDS})
+    for rank, doc in enumerate((data or {}).get("docs", [])):
+        if isbn:
+            return _light_work(doc)
+        found = _normalize(doc.get("title") or "")
+        similar = bool(found) and (wanted in found or found in wanted)
+        if author:
+            if _author_matches(doc, author) and (rank == 0 or similar):
+                return _light_work(doc)
+        elif found == wanted:
+            return _light_work(doc)
+    return None

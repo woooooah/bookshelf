@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { ApiError, apiFetch } from "../api.js";
+
+const BATCH_SIZE = 10;
 
 const STATUS_LABELS = {
     read: "read",
@@ -11,6 +14,7 @@ export default function ImportPage() {
     const [preview, setPreview] = useState(null);
     const [error, setError] = useState("");
     const [uploading, setUploading] = useState(false);
+    const [importing, setImporting] = useState(false);
 
     async function handleFile(event) {
         const file = event.target.files[0];
@@ -61,13 +65,20 @@ export default function ImportPage() {
                     type="file"
                     accept=".csv,text/csv"
                     onChange={handleFile}
-                    disabled={uploading}
+                    disabled={uploading || importing}
                     className="sr-only"
                 />
             </label>
 
             {error && <p className="text-red-700">{error}</p>}
             {preview && <Preview preview={preview} />}
+            {preview && preview.rows.length > 0 && (
+                <Importer
+                    key={`${preview.fileName}-${preview.rows.length}`}
+                    rows={preview.rows}
+                    onRunningChange={setImporting}
+                />
+            )}
         </section>
     );
 }
@@ -116,6 +127,112 @@ function Preview({ preview }) {
                         ))}
                     </ul>
                 </details>
+            )}
+        </div>
+    );
+}
+
+// Uvoz poteka v manjsih delih, da je viden napredek in da zahteve niso predolge
+function Importer({ rows, onRunningChange }) {
+    const [state, setState] = useState({ status: "ready", done: 0, results: [] });
+    const running = state.status === "running";
+    const cancelled = useRef(false);
+
+    useEffect(() => {
+        onRunningChange(running);
+        if (!running) return;
+        // Opozorilo, ce uporabnik med uvozom zapre stran
+        const warn = (event) => event.preventDefault();
+        window.addEventListener("beforeunload", warn);
+        return () => window.removeEventListener("beforeunload", warn);
+    }, [running, onRunningChange]);
+
+    // Ob odhodu s strani se uvoz ustavi
+    useEffect(() => {
+        cancelled.current = false;
+        return () => {
+            cancelled.current = true;
+        };
+    }, []);
+
+    async function run(start, previous) {
+        let results = previous;
+        setState({ status: "running", done: start, results });
+        for (let i = start; i < rows.length; i += BATCH_SIZE) {
+            if (cancelled.current) return;
+            try {
+                const data = await apiFetch("/imports/goodreads/books", {
+                    method: "POST",
+                    body: { rows: rows.slice(i, i + BATCH_SIZE) },
+                });
+                results = [...results, ...data.results];
+                setState({
+                    status: "running",
+                    done: Math.min(i + BATCH_SIZE, rows.length),
+                    results,
+                });
+            } catch {
+                setState({ status: "error", done: i, results });
+                return;
+            }
+        }
+        setState({ status: "finished", done: rows.length, results });
+    }
+
+    const percent = Math.round((state.done / rows.length) * 100);
+
+    if (state.status === "ready") {
+        return (
+            <button
+                type="button"
+                onClick={() => run(0, [])}
+                className="rounded-md bg-accent px-5 py-2 font-medium text-white hover:bg-accent-dark">
+                Import {rows.length} {rows.length === 1 ? "book" : "books"}
+            </button>
+        );
+    }
+
+    return (
+        <div className="space-y-3 rounded-md border border-line bg-paper p-4">
+            <p className="font-medium">
+                {state.status === "finished"
+                    ? "Import finished"
+                    : `Importing ${state.done}/${rows.length}...`}
+            </p>
+            <div
+                role="progressbar"
+                aria-valuenow={state.done}
+                aria-valuemin={0}
+                aria-valuemax={rows.length}
+                aria-label="Import progress"
+                className="h-2.5 overflow-hidden rounded-full bg-line">
+                <div
+                    className="h-full rounded-full bg-accent transition-[width]"
+                    style={{ width: `${percent}%` }}
+                />
+            </div>
+            {running && (
+                <p className="text-sm text-muted">
+                    Keep this page open until the import is finished.
+                </p>
+            )}
+            {state.status === "error" && (
+                <div className="flex flex-wrap items-center gap-3 text-sm">
+                    <p className="text-red-700">
+                        The import stopped at {state.done}/{rows.length}.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => run(state.done, state.results)}
+                        className="rounded-md border border-accent px-3 py-1.5 font-medium text-accent hover:bg-accent-soft">
+                        Continue
+                    </button>
+                </div>
+            )}
+            {state.status === "finished" && (
+                <Link to="/reading" className="text-sm text-accent underline">
+                    Go to My reading
+                </Link>
             )}
         </div>
     );
