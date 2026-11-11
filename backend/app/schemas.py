@@ -117,8 +117,16 @@ class LibraryWork(BaseModel):
     cover_url: str | None
 
 
+class PublisherCollectionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+
+
 class LibraryEdition(EditionOut):
     work: LibraryWork
+    publisher_collection: PublisherCollectionOut | None
 
 
 class LoanOut(BaseModel):
@@ -135,6 +143,7 @@ class LibraryItemOut(LibraryBookOut):
 
     edition: LibraryEdition
     active_loan: LoanOut | None
+    reading_status: ReadingStatus | None = None
 
 
 # Posoje ----------------------------------------------------------------------
