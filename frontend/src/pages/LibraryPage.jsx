@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { apiFetch, apiGet } from "../api.js";
 import { FORMAT_LABELS, seriesLabel } from "../books.js";
 import BookCover from "../components/BookCover.jsx";
 import LendForm from "../components/LendForm.jsx";
+import LibraryFilters from "../components/LibraryFilters.jsx";
+import { applyFilters } from "../libraryFilters.js";
 import LibraryTabs from "../components/LibraryTabs.jsx";
 import Modal from "../components/Modal.jsx";
 
@@ -24,6 +26,9 @@ export default function LibraryPage() {
     const [removingId, setRemovingId] = useState(null);
     const [error, setError] = useState("");
     const [lending, setLending] = useState(null);
+    const [params, setParams] = useSearchParams();
+    const shown = applyFilters(items, params);
+    const filtered = shown.length !== items.length;
 
     function handleLent(loan) {
         setState((s) => ({
@@ -58,6 +63,7 @@ export default function LibraryPage() {
                 <h1 className="text-2xl font-bold">My library</h1>
                 {status === "done" && items.length > 0 && (
                     <p className="text-muted">
+                        {filtered && `${shown.length} of `}
                         {items.length} {items.length === 1 ? "book" : "books"}
                     </p>
                 )}
@@ -78,8 +84,26 @@ export default function LibraryPage() {
                 </p>
             )}
             {status === "done" && items.length > 0 && (
+                <LibraryFilters
+                    items={items}
+                    params={params}
+                    onChange={(next) => setParams(next, { replace: true })}
+                />
+            )}
+            {status === "done" && items.length > 0 && shown.length === 0 && (
+                <p className="text-muted">
+                    No books match these filters.{" "}
+                    <button
+                        type="button"
+                        onClick={() => setParams({}, { replace: true })}
+                        className="text-accent underline">
+                        Clear filters
+                    </button>
+                </p>
+            )}
+            {status === "done" && shown.length > 0 && (
                 <ul className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
-                    {items.map((item) => (
+                    {shown.map((item) => (
                         <LibraryCard
                             key={item.id}
                             item={item}

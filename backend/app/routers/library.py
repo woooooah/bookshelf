@@ -9,7 +9,15 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.auth import get_current_user
 from app.db import get_db
-from app.models import BookFormat, Edition, EditionStatus, LibraryBook, Loan, User
+from app.models import (
+    BookFormat,
+    Edition,
+    EditionStatus,
+    LibraryBook,
+    Loan,
+    ReadingEntry,
+    User,
+)
 from app.schemas import LibraryBookCreate, LibraryBookOut, LibraryItemOut, LoanCreate, LoanOut
 
 router = APIRouter(prefix="/library", tags=["library"])
@@ -21,20 +29,36 @@ def list_library(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Izvodi uporabnika, najnovejsi prvi."""
+    """Izvodi uporabnika, najnovejsi prvi, s statusom branja dela."""
     query = (
         select(LibraryBook)
         .join(LibraryBook.edition)
         .where(LibraryBook.user_id == user.id)
         .options(
             joinedload(LibraryBook.edition).joinedload(Edition.work),
+            joinedload(LibraryBook.edition).joinedload(Edition.publisher_collection),
             selectinload(LibraryBook.loans),
         )
         .order_by(LibraryBook.added_at.desc(), LibraryBook.id.desc())
     )
     if work_id is not None:
         query = query.where(Edition.work_id == work_id)
-    return db.scalars(query).all()
+    books = db.scalars(query).unique().all()
+
+    statuses = dict(
+        db.execute(
+            select(ReadingEntry.work_id, ReadingEntry.status).where(
+                ReadingEntry.user_id == user.id,
+                ReadingEntry.work_id.in_({b.edition.work_id for b in books}),
+            )
+        ).all()
+    )
+    return [
+        LibraryItemOut.model_validate(book).model_copy(
+            update={"reading_status": statuses.get(book.edition.work_id)}
+        )
+        for book in books
+    ]
 
 
 @router.delete("/{library_book_id}", status_code=status.HTTP_204_NO_CONTENT)
